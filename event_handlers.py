@@ -89,6 +89,7 @@ def handle_file_display(main_window, path):
         main_window.text_view.setText("")
         main_window.show_video_player(False)
 
+
 def handle_folder_display(main_window, path):
     main_window.video_player.mediaplayer.stop()
     pixmap = load_image(path, main_window.placeholder_image)

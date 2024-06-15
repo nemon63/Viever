@@ -274,8 +274,7 @@ class MainWindow(QMainWindow):
     def update_image_label(self):
         if self.current_path and os.path.isdir(self.current_path):
             pixmap = load_image(self.current_path, self.placeholder_image)
-            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
-
+            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))  
     def eventFilter(self, obj, event):
         if event.type() == event.FocusOut:
             if obj == self.text_edit_comment or obj == self.text_edit_code:
@@ -361,7 +360,7 @@ class MainWindow(QMainWindow):
         self.video_player = VideoPlayer(self)
         self.video_player.setMinimumSize(800, 600)
         self.video_player.time_changed.connect(self.update_tags_display)
-    
+
         self.image_label = QLabel("image")
         self.image_label.setFrameShape(QLabel.Panel)
         self.image_label.setFrameShadow(QLabel.Plain)
@@ -369,23 +368,23 @@ class MainWindow(QMainWindow):
         self.image_label.setMidLineWidth(1)
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setMinimumSize(800, 600)
-        self.image_label.setScaledContents(True)
-    
+        self.image_label.setScaledContents(False)  # Измените на False
+
         self.text_view = QTextEdit()
         self.text_view.setMinimumSize(800, 600)
-    
+
         self.media_layout = QVBoxLayout()
         self.media_layout.addWidget(self.image_label)
         self.media_layout.addWidget(self.video_player)
-    
+
         self.media_widget = QWidget()
         self.media_widget.setLayout(self.media_layout)
-    
+
         self.right_splitter.addWidget(self.media_widget)
         self.right_splitter.addWidget(self.text_view)
         self.right_splitter.setStretchFactor(0, 3)
         self.right_splitter.setStretchFactor(1, 1)
-        self.show_video_player(False)
+        self.show_video_player(False)   
     
     def save_current_item(self):
         if self.current_folder and self.current_path:
