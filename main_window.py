@@ -13,18 +13,21 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Видео уроки")
         self.setGeometry(100, 100, 1049, 805)
 
+        # Инициализация переменных для текущей папки и пути
         self.current_folder = None
         self.current_path = None
         self.data_file = None
         self.data = {}
         self.preview_cache_folder = None
 
+        # Создание и заполнение изображения-заполнителя
         self.placeholder_image = QPixmap(400, 300)
         self.placeholder_image.fill(Qt.lightGray)
 
         self.initUI()
 
     def initUI(self):
+        # Инициализация центрального виджета и главного макета
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
 
@@ -35,10 +38,12 @@ class MainWindow(QMainWindow):
         self.initLeftPane()
         self.initRightPane()
 
+        # Инициализация строки состояния
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
     def initLeftPane(self):
+        # Инициализация левого окна
         self.left_widget = QWidget()
         self.left_layout = QVBoxLayout()
         self.left_widget.setLayout(self.left_layout)
@@ -49,6 +54,7 @@ class MainWindow(QMainWindow):
         self.splitter.addWidget(self.left_widget)
 
     def initLeftPaneControls(self):
+        # Инициализация элементов управления в левом окне
         self.horizontal_layout = QHBoxLayout()
 
         self.btn_open = QPushButton("Выберите папку")
@@ -72,6 +78,7 @@ class MainWindow(QMainWindow):
         self.left_layout.addLayout(self.horizontal_layout)
 
     def initTreeView(self):
+        # Инициализация древовидного вида файлов
         self.tree_view = QTreeView()
         self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree_view.customContextMenuRequested.connect(self.open_menu)
@@ -83,14 +90,17 @@ class MainWindow(QMainWindow):
         self.left_layout.addWidget(self.tree_view)
 
     def initRightPane(self):
+        # Инициализация правого окна
         self.right_splitter = QSplitter(Qt.Vertical)
         self.initMediaWidgets()
         self.initTextEditors()
         self.splitter.addWidget(self.right_splitter)
 
     def initMediaWidgets(self):
+        # Инициализация медиа-виджетов (видеоплеер и изображение)
         self.video_player = VideoPlayer(self)
         self.video_player.setMinimumSize(800, 600)
+        self.video_player.time_changed.connect(self.update_tags_display)
 
         self.image_label = QLabel("image")
         self.image_label.setFrameShape(QLabel.Panel)
@@ -99,7 +109,7 @@ class MainWindow(QMainWindow):
         self.image_label.setMidLineWidth(1)
         self.image_label.setAlignment(Qt.AlignCenter)
         self.image_label.setMinimumSize(800, 600)
-        self.image_label.setScaledContents(True)
+        self.image_label.setScaledContents(False)  # Изменено на False
 
         self.text_view = QTextEdit()
         self.text_view.setMinimumSize(800, 600)
@@ -118,6 +128,7 @@ class MainWindow(QMainWindow):
         self.show_video_player(False)
 
     def initTextEditors(self):
+        # Инициализация редакторов текста
         self.text_edit_widget = QWidget()
         self.text_edit_layout = QVBoxLayout(self.text_edit_widget)
 
@@ -151,6 +162,7 @@ class MainWindow(QMainWindow):
         self.right_splitter.addWidget(self.text_edit_widget)
 
     def show_video_player(self, show):
+        # Показ или скрытие медиа-виджетов в зависимости от типа файла
         if self.current_path is None:
             self.video_player.setVisible(False)
             self.image_label.setVisible(False)
@@ -166,6 +178,7 @@ class MainWindow(QMainWindow):
             self.text_view.setVisible(is_text)
 
     def open_folder(self):
+        # Открытие диалогового окна для выбора папки и обновление представления
         folder = QFileDialog.getExistingDirectory(self, "Выберите папку")
         if folder:
             self.model = QFileSystemModel()
@@ -181,11 +194,13 @@ class MainWindow(QMainWindow):
             self.update_view()
 
     def create_preview_cache_folder(self):
+        # Создание папки для кэширования превью, если она не существует
         self.preview_cache_folder = os.path.join(self.current_folder, ".preview_cache")
         if not os.path.exists(self.preview_cache_folder):
             os.makedirs(self.preview_cache_folder)
 
     def on_tree_view_clicked(self, index):
+        # Обработчик клика на элементе дерева файлов
         handle_tree_view_clicked(self, index)
         self.current_path = self.model.filePath(index)
         if os.path.isdir(self.current_path):
@@ -196,12 +211,15 @@ class MainWindow(QMainWindow):
             self.update_video_player()
 
     def on_tree_view_double_clicked(self, index):
+        # Обработчик двойного клика на элементе дерева файлов
         handle_tree_view_double_clicked(self, index)
 
     def open_menu(self, position):
+        # Обработчик открытия контекстного меню
         handle_menu(self, position)
 
     def mark_as_reviewed(self):
+        # Обработка отметки файла как просмотренного
         index = self.tree_view.currentIndex()
         if index.isValid():
             path = self.model.filePath(index)
@@ -215,21 +233,25 @@ class MainWindow(QMainWindow):
             self.status_bar.showMessage(f"Файл {relative_path} отмечен как просмотренный")
 
     def save_changes(self):
+        # Сохранение изменений в текущем элементе и запись данных в файл
         self.save_current_item()
         save_data(self.data_file, self.data)
         self.status_bar.showMessage("Изменения сохранены")
 
     def load_changes(self):
+        # Загрузка изменений из файла и обновление представления
         self.data = load_data(self.data_file)
         self.update_view()
         self.status_bar.showMessage("Изменения загружены")
 
     def update_view(self):
+        # Обновление представления дерева файлов
         if self.current_folder:
             index = self.tree_view.rootIndex()
             self.update_view_recursive(index)
 
     def update_view_recursive(self, parent_index):
+        # Рекурсивное обновление представления дерева файлов
         model = self.tree_view.model()
         for row in range(model.rowCount(parent_index)):
             index = model.index(row, 0, parent_index)
@@ -245,6 +267,7 @@ class MainWindow(QMainWindow):
                 self.update_view_recursive(index)
 
     def save_current_item(self):
+        # Сохранение текущего элемента (тегов, комментариев и кода)
         if self.current_folder and self.current_path:
             try:
                 relative_path = os.path.relpath(self.current_path, self.current_folder)
@@ -261,8 +284,8 @@ class MainWindow(QMainWindow):
                 "code": self.text_edit_code.toPlainText()
             })
 
-
     def save_description(self):
+        # Сохранение описания текущей папки
         if self.current_path and os.path.isdir(self.current_path):
             description_path = os.path.join(self.current_path, "readme.txt")
             try:
@@ -272,24 +295,30 @@ class MainWindow(QMainWindow):
                 self.status_bar.showMessage(f"Ошибка сохранения описания: {e}")
 
     def update_image_label(self):
+        # Обновление метки изображения
         if self.current_path and os.path.isdir(self.current_path):
             pixmap = load_image(self.current_path, self.placeholder_image)
-            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))  
+            self.image_label.setPixmap(pixmap.scaled(self.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)) 
+
     def eventFilter(self, obj, event):
+        # Обработчик события выхода из фокуса для сохранения текущего элемента
         if event.type() == event.FocusOut:
             if obj == self.text_edit_comment or obj == self.text_edit_code:
                 self.save_current_item()
         return super().eventFilter(obj, event)
 
     def resizeEvent(self, event):
+        # Обработчик события изменения размера окна
         super().resizeEvent(event)
 
     def sort_tree_view(self, logical_index):
+        # Обработчик сортировки дерева файлов
         header = self.tree_view.header()
         order = header.sortIndicatorOrder()
         self.tree_view.model().sort(logical_index, order)
 
     def update_video_player(self):
+        # Обновление состояния видеоплеера
         if self.current_path and self.current_path.lower().endswith(('.mp4', '.avi', '.mkv', '.mov')):
             self.video_player.media = self.video_player.instance.media_new(self.current_path)
             self.video_player.mediaplayer.set_media(self.video_player.media)
@@ -307,6 +336,7 @@ class MainWindow(QMainWindow):
             self.video_player.mediaplayer.stop()
 
     def filter_tree_view(self, text):
+        # Фильтрация элементов дерева файлов по тексту
         text = text.lower()
         root_index = self.model.index(self.current_folder)
         if not text:
@@ -315,6 +345,7 @@ class MainWindow(QMainWindow):
             self.filter_tree_view_recursive(root_index, text)
 
     def filter_tree_view_recursive(self, index, text):
+        # Рекурсивная фильтрация элементов дерева файлов
         model = self.tree_view.model()
         if model.isDir(index):
             dir_name = model.fileName(index).lower()
@@ -334,6 +365,7 @@ class MainWindow(QMainWindow):
             return is_visible
 
     def reset_tree_view_visibility(self, index):
+        # Сброс видимости элементов дерева файлов
         model = self.tree_view.model()
         self.tree_view.setRowHidden(index.row(), index.parent(), False)
         if model.isDir(index):
@@ -342,12 +374,14 @@ class MainWindow(QMainWindow):
                 self.reset_tree_view_visibility(child_index)
 
     def change_theme(self, index):
+        # Смена темы интерфейса
         if index == 0:
             self.setStyleSheet("")
         elif index == 1:
             self.setStyleSheet("background-color: #2b2b2b; color: white;")
 
     def search_in_tags(self, path, text):
+        # Поиск в тегах
         relative_path = os.path.relpath(path, self.current_folder)
         if relative_path in self.data:
             tags = self.data[relative_path].get("tags", {})
@@ -356,54 +390,8 @@ class MainWindow(QMainWindow):
                     return True
         return False
 
-    def initMediaWidgets(self):
-        self.video_player = VideoPlayer(self)
-        self.video_player.setMinimumSize(800, 600)
-        self.video_player.time_changed.connect(self.update_tags_display)
-
-        self.image_label = QLabel("image")
-        self.image_label.setFrameShape(QLabel.Panel)
-        self.image_label.setFrameShadow(QLabel.Plain)
-        self.image_label.setLineWidth(1)
-        self.image_label.setMidLineWidth(1)
-        self.image_label.setAlignment(Qt.AlignCenter)
-        self.image_label.setMinimumSize(800, 600)
-        self.image_label.setScaledContents(False)  # Измените на False
-
-        self.text_view = QTextEdit()
-        self.text_view.setMinimumSize(800, 600)
-
-        self.media_layout = QVBoxLayout()
-        self.media_layout.addWidget(self.image_label)
-        self.media_layout.addWidget(self.video_player)
-
-        self.media_widget = QWidget()
-        self.media_widget.setLayout(self.media_layout)
-
-        self.right_splitter.addWidget(self.media_widget)
-        self.right_splitter.addWidget(self.text_view)
-        self.right_splitter.setStretchFactor(0, 3)
-        self.right_splitter.setStretchFactor(1, 1)
-        self.show_video_player(False)   
-    
-    def save_current_item(self):
-        if self.current_folder and self.current_path:
-            try:
-                relative_path = os.path.relpath(self.current_path, self.current_folder)
-            except ValueError:
-                relative_path = self.current_path
-            if relative_path not in self.data:
-                self.data[relative_path] = {}
-            if "tags" not in self.data[relative_path]:
-                self.data[relative_path]["tags"] = {}
-            current_time = self.video_player.mediaplayer.get_time() // 1000
-            self.data[relative_path]["tags"][current_time] = self.text_edit_tags.text().split()
-            self.data[relative_path].update({
-                "comment": self.text_edit_comment.toPlainText(),
-                "code": self.text_edit_code.toPlainText()
-            })
-    
     def update_tags_display(self):
+        # Обновление отображения тегов
         if self.current_folder and self.current_path:
             try:
                 relative_path = os.path.relpath(self.current_path, self.current_folder)

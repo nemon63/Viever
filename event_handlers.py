@@ -5,6 +5,14 @@ from PyQt5.QtCore import QDir, Qt
 from file_operations import load_image, load_description, load_text_file, load_docx_file, load_pdf_file
 
 def handle_tree_view_clicked(main_window, index):
+    """
+    Обработчик клика по элементу дерева файлов.
+    Сохраняет текущий элемент, обновляет статус и отображает выбранный файл или папку.
+
+    Args:
+        main_window (QMainWindow): Основное окно приложения.
+        index (QModelIndex): Индекс выбранного элемента.
+    """
     main_window.save_current_item()
     path = main_window.model.filePath(index)
     main_window.status_bar.showMessage(f"Выбрано: {path}")
@@ -22,6 +30,14 @@ def handle_tree_view_clicked(main_window, index):
     update_current_item_data(main_window, path)
 
 def handle_tree_view_double_clicked(main_window, index):
+    """
+    Обработчик двойного клика по элементу дерева файлов.
+    Открывает файл или папку.
+
+    Args:
+        main_window (QMainWindow): Основное окно приложения.
+        index (QModelIndex): Индекс выбранного элемента.
+    """
     path = main_window.model.filePath(index)
     if os.path.isdir(path):
         os.startfile(path)
@@ -31,6 +47,13 @@ def handle_tree_view_double_clicked(main_window, index):
             os.startfile(path)
 
 def handle_menu(main_window, position):
+    """
+    Обработчик контекстного меню для дерева файлов.
+
+    Args:
+        main_window (QMainWindow): Основное окно приложения.
+        position (QPoint): Позиция курсора для отображения меню.
+    """
     indexes = main_window.tree_view.selectedIndexes()
     if indexes:
         index = indexes[0]
@@ -46,6 +69,13 @@ def handle_menu(main_window, position):
         menu.exec_(main_window.tree_view.viewport().mapToGlobal(position))
 
 def add_cover(main_window, path):
+    """
+    Добавление обложки к выбранной папке.
+
+    Args:
+        main_window (QMainWindow): Основное окно приложения.
+        path (str): Путь к папке.
+    """
     file_path, _ = QFileDialog.getOpenFileName(main_window, "Выберите изображение", "", "Images (*.png *.jpg *.jpeg)")
     if file_path:
         cover_path = os.path.join(path, "cover.jpg")
@@ -56,6 +86,13 @@ def add_cover(main_window, path):
         handle_tree_view_clicked(main_window, main_window.model.index(path))
 
 def add_description(main_window, path):
+    """
+    Добавление описания к выбранной папке.
+
+    Args:
+        main_window (QMainWindow): Основное окно приложения.
+        path (str): Путь к папке.
+    """
     description_path = os.path.join(path, "readme.txt")
     if not os.path.exists(description_path):
         with open(description_path, "w", encoding="utf-8") as f:
@@ -65,6 +102,13 @@ def add_description(main_window, path):
     os.startfile(description_path)
 
 def handle_file_display(main_window, path):
+    """
+    Отображение содержимого файла в основном окне.
+
+    Args:
+        main_window (QMainWindow): Основное окно приложения.
+        path (str): Путь к файлу.
+    """
     ext = os.path.splitext(path)[1].lower()
     if ext in ('.jpg', '.jpeg', '.png', '.bmp', '.gif'):
         pixmap = QPixmap(path)
@@ -89,8 +133,14 @@ def handle_file_display(main_window, path):
         main_window.text_view.setText("")
         main_window.show_video_player(False)
 
-
 def handle_folder_display(main_window, path):
+    """
+    Отображение содержимого папки в основном окне.
+
+    Args:
+        main_window (QMainWindow): Основное окно приложения.
+        path (str): Путь к папке.
+    """
     main_window.video_player.mediaplayer.stop()
     pixmap = load_image(path, main_window.placeholder_image)
     main_window.image_label.setPixmap(pixmap.scaled(main_window.image_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
@@ -99,6 +149,13 @@ def handle_folder_display(main_window, path):
     main_window.show_video_player(False)
 
 def update_current_item_data(main_window, path):
+    """
+    Обновление данных текущего элемента (теги, комментарии, код).
+
+    Args:
+        main_window (QMainWindow): Основное окно приложения.
+        path (str): Путь к текущему элементу.
+    """
     try:
         relative_path = os.path.relpath(path, main_window.current_folder)
     except ValueError:
@@ -127,4 +184,3 @@ def update_current_item_data(main_window, path):
         main_window.tree_view.model().setData(index, QColor(Qt.green), Qt.BackgroundRole)
     else:
         main_window.tree_view.model().setData(index, QColor(Qt.white), Qt.BackgroundRole)
-
